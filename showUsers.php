@@ -1,3 +1,13 @@
+<?php
+session_start();
+
+// Проверка авторизации
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    header('Location: login.php');
+    exit;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -7,7 +17,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-image: url('fon.jpg'); /* Фоновая картинка */
+            background-image: url('fon.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -22,9 +32,9 @@
         h1 {
             font-size: 2.5em;
             font-weight: bold;
-            color: #FFA500;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* Добавляем тень для текста */
-            animation: glow 2s infinite alternate; /* Анимация подсветки */
+            color: #f44336;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            animation: glow 2s infinite alternate;
             margin-bottom: 20px;
             z-index: 2;
         }
@@ -39,7 +49,7 @@
         }
 
         .table-container {
-            background: none; /* Убираем белый блок под таблицей */
+            background: none;
             padding: 20px;
             width: 80%;
             max-width: 1000px;
@@ -91,7 +101,7 @@
             gap: 10px;
         }
 
-        .edit, .delete {
+        .edit, .delete, .menu {
             padding: 10px 15px;
             background-color: #fda085;
             border: none;
@@ -102,7 +112,7 @@
             transition: background-color 0.3s, transform 0.3s;
         }
 
-        .edit:hover {
+        .edit:hover, .menu:hover {
             background-color: #f6d365;
             transform: scale(1.05);
         }
@@ -116,6 +126,15 @@
             transform: scale(1.05);
         }
 
+        .menu-container {
+            display: flex;
+            justify-content: flex-end;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 20px;
+            z-index: 2;
+        }
+
         @keyframes slideIn {
             from { transform: translateY(-20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -125,6 +144,11 @@
 <body>
 
 <h1>Список зарегистрированных пользователей</h1>
+
+<!-- Кнопка для возврата в меню -->
+<div class="menu-container">
+    <button class="menu" onclick="window.location.href = '/Exercise2/index.php';">Вернуться в меню</button>
+</div>
 
 <div class="table-container">
     <?php

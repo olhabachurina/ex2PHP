@@ -23,8 +23,8 @@
             font-size: 2.5em;
             font-weight: bold;
             color: #FFA500;
-            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5); /* Добавляем тень для заголовка */
-            animation: glow 2s infinite alternate; /* Анимация подсветки */
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+            animation: glow 2s infinite alternate;
             margin-bottom: 20px;
             z-index: 2;
         }
@@ -39,7 +39,7 @@
         }
 
         form {
-            background: rgba(255, 255, 255, 0.7); /* Полупрозрачный фон для читабельности */
+            background: rgba(255, 255, 255, 0.7);
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -54,7 +54,7 @@
             margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
-            background: rgba(255, 255, 255, 0.85); /* Легкая прозрачность для полей ввода */
+            background: rgba(255, 255, 255, 0.85);
         }
 
         input[type="submit"] {
@@ -69,17 +69,32 @@
 
         input[type="submit"]:hover {
             background-color: #f6d365;
-            transform: scale(1.05); /* Легкое увеличение при наведении */
+            transform: scale(1.05);
         }
 
         input[type="submit"]:active {
-            transform: scale(0.95); /* Легкий эффект нажатия */
+            transform: scale(0.95);
         }
 
         .error {
             color: red;
             font-weight: bold;
             animation: shake 0.5s;
+        }
+
+        .notification {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            background-color: #4CAF50; /* Зеленый фон для успешного сообщения */
+            width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .notification.error {
+            background-color: #f44336; /* Красный фон для ошибки */
         }
 
         .avatar-selection {
@@ -97,13 +112,8 @@
         }
 
         .avatar-selection label img:hover {
-            transform: scale(1.2); /* Увеличение при наведении */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); /* Тень при наведении */
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
 
         @keyframes slideDown {
@@ -118,16 +128,98 @@
             75% { transform: translateX(-5px); }
         }
 
-        p.success {
-            color: green;
-            font-weight: bold;
-        }
-
     </style>
+
+    <!-- Скрипт для перенаправления через 3 секунды -->
+    <?php
+    $exists = false;
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($errors) && !$exists): ?>
+        <script>
+            setTimeout(function() {
+                window.location.href = '/Exercise2/index.php';
+            }, 3000); // Перенаправление через 3 секунды
+        </script>
+    <?php endif; ?>
+
 </head>
 <body>
 
 <h1>Добавить пользователя</h1>
+
+<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $login = trim($_POST['login']);
+    $password = trim($_POST['password']);
+    $email = trim($_POST['email']);
+    $avatar = $_POST['avatar'];
+
+    // Валидация данных
+    $errors = [];
+
+    // Валидация логина
+    if (strlen($login) < 3) {
+        $errors[] = "Логин должен содержать минимум 3 символа.";
+    }
+
+    if (!preg_match('/^[a-zA-Z0-9]+$/', $login)) {
+        $errors[] = "Логин может содержать только буквы и цифры.";
+    }
+
+    // Валидация пароля
+    if (strlen($password) < 6) {
+        $errors[] = "Пароль должен содержать минимум 6 символов.";
+    }
+
+    // Валидация email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Неверный формат email.";
+    }
+
+    // Если есть ошибки, выводим их
+    if (!empty($errors)) {
+        echo "<div class='notification error'>";
+        foreach ($errors as $error) {
+            echo "<p>$error</p>";
+        }
+        echo "</div>";
+    } else {
+        // Хэшируем пароль
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // Функция для записи пользователя в файл
+        function addUser($userData) {
+            $filename = 'users.txt';
+            $handle = fopen($filename, 'a');
+            fwrite($handle, implode(': ', $userData) . PHP_EOL);
+            fclose($handle);
+        }
+
+        $filename = 'users.txt';
+        if (file_exists($filename)) {
+            $users = file($filename, FILE_IGNORE_NEW_LINES);
+        } else {
+            $users = [];
+        }
+
+        $exists = false;
+        foreach ($users as $user) {
+            $userDetails = explode(': ', $user);
+            if ($userDetails[0] === $login) {
+                $exists = true;
+                break;
+            }
+        }
+
+        if ($exists) {
+            echo "<div class='notification error'>Пользователь с логином $login уже существует!</div>";
+        } else {
+            // Добавляем пользователя с хэшированным паролем
+            addUser([$login, $hashedPassword, $email, $avatar]);
+            echo "<div class='notification'>Пользователь $login успешно зарегистрирован!</div>";
+        }
+    }
+}
+?>
 
 <form action="addUser.php" method="POST">
     <label for="login">Логин (должен содержать минимум 3 символа):</label><br>
@@ -190,79 +282,6 @@
 
     <input type="submit" value="Зарегистрировать">
 </form>
-
-<?php
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login = trim($_POST['login']);
-    $password = trim($_POST['password']);
-    $email = trim($_POST['email']);
-    $avatar = $_POST['avatar'];
-
-    // Валидация данных
-    $errors = [];
-
-    // Валидация логина
-    if (strlen($login) < 3) {
-        $errors[] = "Логин должен содержать минимум 3 символа.";
-    }
-
-    if (!preg_match('/^[a-zA-Z0-9]+$/', $login)) {
-        $errors[] = "Логин может содержать только буквы и цифры.";
-    }
-
-    // Валидация пароля
-    if (strlen($password) < 6) {
-        $errors[] = "Пароль должен содержать минимум 6 символов.";
-    }
-
-    // Валидация email
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Неверный формат email.";
-    }
-
-    // Если есть ошибки, выводим их
-    if (!empty($errors)) {
-        foreach ($errors as $error) {
-            echo "<p class='error'>$error</p>";
-        }
-    } else {
-        // Хэшируем пароль
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
-        // Функция для записи пользователя в файл
-        function addUser($userData) {
-            $filename = 'users.txt';
-            $handle = fopen($filename, 'a');
-            fwrite($handle, implode(': ', $userData) . PHP_EOL);
-            fclose($handle);
-        }
-
-        $filename = 'users.txt';
-        if (file_exists($filename)) {
-            $users = file($filename, FILE_IGNORE_NEW_LINES);
-        } else {
-            $users = [];
-        }
-
-        $exists = false;
-        foreach ($users as $user) {
-            $userDetails = explode(': ', $user);
-            if ($userDetails[0] === $login) {
-                $exists = true;
-                break;
-            }
-        }
-
-        if ($exists) {
-            echo "<p class='error'>Пользователь с логином $login уже существует!</p>";
-        } else {
-            // Добавляем пользователя с хэшированным паролем
-            addUser([$login, $hashedPassword, $email, $avatar]);
-            echo "<p class='success'>Пользователь $login успешно зарегистрирован!</p>";
-        }
-    }
-}
-?>
 
 </body>
 </html>

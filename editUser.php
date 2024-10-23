@@ -1,6 +1,8 @@
 <?php
 $filename = 'users.txt';
 $login = $password = $email = $avatar = '';
+$successMessage = ''; // Переменная для сообщения об успешном обновлении
+$errorMessage = ''; // Переменная для сообщения об ошибке
 
 if (isset($_GET['index']) && file_exists($filename)) {
     $index = (int)$_GET['index'];
@@ -13,6 +15,8 @@ if (isset($_GET['index']) && file_exists($filename)) {
         $password = $userDetails[1]; // Хэш пароля
         $email = $userDetails[2];
         $avatar = isset($userDetails[3]) ? $userDetails[3] : '';
+    } else {
+        $errorMessage = 'Пользователь не найден.';
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -34,14 +38,12 @@ if (isset($_GET['index']) && file_exists($filename)) {
         // Перезаписываем файл с обновленными данными
         file_put_contents($filename, implode(PHP_EOL, $users) . PHP_EOL);
 
-        echo '<p>Пользователь успешно обновлен.</p>';
-        echo '<p><a href="showUsers.php">Вернуться к списку пользователей</a></p>';
-        exit;
+        // Сообщение об успешном обновлении
+        $successMessage = 'Пользователь успешно обновлен.';
     }
 } else {
-    echo '<p>Пользователь не найден.</p>';
+    $errorMessage = 'Файл с пользователями не найден.';
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -97,11 +99,40 @@ if (isset($_GET['index']) && file_exists($filename)) {
             height: 50px;
             border-radius: 50%;
         }
+
+        .notification {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            background-color: #4CAF50; /* Зеленый фон для успешного сообщения */
+        }
+
+        .notification.error {
+            background-color: #f44336; /* Красный фон для ошибки */
+        }
     </style>
+
+    <!-- Скрипт для перенаправления через 3 секунды -->
+    <?php if ($successMessage): ?>
+        <script>
+            setTimeout(function() {
+                window.location.href = '/Exercise2/showUsers.php';
+            }, 3000); // Перенаправление через 3 секунды
+        </script>
+    <?php endif; ?>
 </head>
 <body>
 
 <h1>Редактировать пользователя</h1>
+
+<!-- Сообщения об успешном обновлении или ошибке -->
+<?php if ($successMessage): ?>
+    <div class="notification"><?php echo $successMessage; ?></div>
+<?php elseif ($errorMessage): ?>
+    <div class="notification error"><?php echo $errorMessage; ?></div>
+<?php endif; ?>
 
 <form action="editUser.php?index=<?php echo $index; ?>" method="POST">
     <label for="login">Логин:</label><br>
